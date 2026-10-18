@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 import io
 
 st.set_page_config(page_title="Dashboard Analyse Interventions", layout="wide")
@@ -56,7 +55,7 @@ if uploaded_file is not None:
         col_materiel = "Matériel"
         col_charge = "Charge prévue"
         
-        # Conversion de la charge en minutes ou heures si possible
+        # Conversion sécurisée de la charge
         def parse_charge(val):
             if pd.isna(val):
                 return 0.0
@@ -80,8 +79,7 @@ if uploaded_file is not None:
         with tab1:
             st.subheader("1. Nombre de vélos / matériels sortis par agent")
             if col_agent in df_filtered.columns and col_materiel in df_filtered.columns:
-                mat_agent = df_filtered.groupby(col_agent)[col_materiel].count().reset_index()
-                mat_agent.columns = ['Agent', 'Nombre de matériels sortis']
+                mat_agent = df_filtered.groupby(col_agent)[col_materiel].count().reset_index(name='Nombre de matériels sortis')
                 st.dataframe(mat_agent, use_container_width=True)
             
             st.subheader("2. Identifiants de formulaires personnalisés (A, B, C) par agent & pourcentages")
@@ -107,9 +105,9 @@ if uploaded_file is not None:
 
             st.subheader("3. Total de charge prévue par agent")
             if col_agent in df_filtered.columns:
-                charge_agent = df_filtered.groupby(col_agent)['Charge_Minutes'].sum().reset_index()
-                charge_agent['Charge (heures)'] = (charge_agent['Charge_Minutes'] / 60).round(2)
-                st.dataframe(charge_agent[['Agent', 'Charge (heures)']], use_container_width=True)
+                charge_agent = df_filtered.groupby(col_agent)['Charge_Minutes'].sum().reset_index(name='Charge_Total_Minutes')
+                charge_agent['Charge (heures)'] = (charge_agent['Charge_Total_Minutes'] / 60).round(2)
+                st.dataframe(charge_agent[[col_agent, 'Charge (heures)']].rename(columns={col_agent: 'Agent'}), use_container_width=True)
                 
             st.subheader("4. Nombre et pourcentages par Modèle d'Équipement (VAE & VLS)")
             if col_modele in df_filtered.columns:
@@ -151,12 +149,15 @@ if uploaded_file is not None:
 
         with tab3:
             st.subheader("📝 Commentaires et Descriptions Détaillées")
-            cols_to_check = ['Texte libre 2', 'Texte libre 3', 'Texte libre 4', 'Texte libre 5', 'Contenu de la description détaillée', 'Matériel', col_agent]
+            st.markdown("Affichage de toutes les descriptions détaillées et colonnes de texte libre avec les numéros de matériel et agents concernés.")
+            
+            cols_to_check = [col_agent, 'Matériel', 'Contenu de la description détaillée', 'Texte libre 2', 'Texte libre 3', 'Texte libre 4', 'Texte libre 5']
             existing_cols = [c for c in cols_to_check if c in df_filtered.columns]
             
             if existing_cols:
-                df_comments = df_filtered[existing_cols].dropna(subset=[c for c in ['Texte libre 2', 'Contenu de la description détaillée'] if c in df_filtered.columns], how='all')
-                st.write(f"Nombre total de lignes avec commentaires/descriptions : {len(df_comments)}")
+                # Afficher toutes les lignes du tableau filtré avec les colonnes textuelles
+                df_comments = df_filtered[existing_cols]
+                st.write(f"Nombre total d'enregistrements affichés : {len(df_comments)}")
                 st.dataframe(df_comments, use_container_width=True)
             else:
                 st.info("Aucune colonne de texte libre trouvée.")
