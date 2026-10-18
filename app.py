@@ -244,8 +244,3 @@ if uploaded_file is not None:
         st.warning("⚠️ Aucune donnée disponible pour la période sélectionnée.")
 else:
     st.info("👋 Veuillez importer votre fichier Excel principal dans la barre latérale pour démarrer.")
-            )
-    else:
-        st.warning("Aucune donnée disponible pour la période sélectionnée.")
-else:
-    st.info("Veuillez importer un fichier Excel pour commencer.")
